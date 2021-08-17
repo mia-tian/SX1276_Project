@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <SPI.h>
 
 struct Serial_Info{
   char txrx[2]{};
@@ -12,11 +13,16 @@ void setup() {
   Serial.setTimeout(1);
 
 }
-
+/**
+ * reads the input as a string
+ * input comes in as: "code register value"
+ **/
 void loop() {
 
   while (!Serial.available());
   String input_string = Serial.readString();
+
+  Serial.print(input_string);
 
   if(input_string.substring(0,2) == "wr"){
     
@@ -26,8 +32,10 @@ void loop() {
     char* reg_str = strtok(NULL," ");
     char* val_str = strtok(NULL, " ");
 
-    int reg = String(reg_str).toInt();
-    int val = String(val_str).toInt();
+    int reg_int = String(reg_str).toInt();
+    int val_int = String(val_str).toInt();
+    byte reg = reg_int;
+    byte val = val_int;
 
     Serial.print("|");
     Serial.print(code);
@@ -36,6 +44,7 @@ void loop() {
     Serial.print("|");
     Serial.print(val);
     Serial.print("|");
+
   }
   else{
     Serial.print(input_string);
@@ -43,6 +52,11 @@ void loop() {
   
 }
 
+
+/**
+ * reads the input as bytes using struct packing
+ * input comes in as 12 bytes: b'code\x00\x00\x00\register\x00\x00\x00\value\x00\x00\x00
+ **/
 // void loop(){
 
 //   byte packet_length = 0x00;
@@ -58,21 +72,13 @@ void loop() {
       
 //     }
 //     Serial.print(" ");
-//     //Serial.print(char(buf[i]));
 //   }
-//   // char code[2] = (char[]) buf[0];
-//   // Serial.print(code);
-//   // Serial.print(" ");
-//   int reg = (int) buf[4];
+
+//   byte reg = buf[4];
 //   Serial.print(reg);
 //   Serial.print(" ");
-//   int val = (int) buf[8];
+//   byte val = buf[8];
 //   Serial.print(val);
 //   Serial.print(" end of loop | ");
-//   // String incoming = Serial.readString();
-//   // Serial.print(incoming, BIN);
-//   // byte incoming_byte[1];
-//   // Serial.readBytes(incoming_byte, 1);
-//   // Serial.print(incoming_byte);
   
-// }
+//  }
