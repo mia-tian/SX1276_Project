@@ -31,7 +31,7 @@ class SX1276:
                             500 : 0b1001 }
         # error coding rate: 4/5
         # explicit header mode
-        value = str(bandwidth_to_value[bandwidth] * 0b10000 + 0b0010)
+        value = str((bandwidth_to_value[bandwidth] << 4) + 0b0010)
         print('Setting Bandwidth to', bandwidth)
         reg = str(0x1D)
         command = self.construct_command(SX1276.WRITE, reg, value)
@@ -54,7 +54,7 @@ class SX1276:
         # normal mode
         # crc disable
         # RX timeout MSB
-        value = str(sf_to_value[sf] * 0b10000 + 0b0000)
+        value = str((sf_to_value[sf] << 4) + 0b0000)
         print('Setting Spreading Factor to', sf)
         reg = str(0x1E)
         command = self.construct_command(SX1276.WRITE, reg, value)
