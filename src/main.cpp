@@ -1,31 +1,27 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-struct Serial_Info{
-  char txrx[2]{};
-  int packet{};
-  int reg{};
-  int value{};
-};
 
 void setup() {
   Serial.begin(115200);
-  Serial.setTimeout(1);
+  Serial.setTimeout(5);
 
 }
 /**
  * reads the input as a string
- * input comes in as: "code register value"
+ * input comes in as: "code register value \r"
  **/
 void loop() {
+  Serial.print("|loop|");
 
   while (!Serial.available());
-  String input_string = Serial.readString();
-
+  String input_string = Serial.readStringUntil('\r');
   Serial.print(input_string);
 
+  // write register
   if(input_string.substring(0,2) == "wr"){
     
+    // convert input to bytes
     char input[input_string.length()];
     input_string.toCharArray(input, input_string.length());
     char* code = strtok(input, " ");
@@ -49,6 +45,8 @@ void loop() {
   else{
     Serial.print(input_string);
   }
+
+  Serial.print("\r");
   
 }
 

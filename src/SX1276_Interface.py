@@ -1,6 +1,5 @@
 import serial
 import time
-import struct
 
 class SX1276:
 
@@ -8,12 +7,18 @@ class SX1276:
     WRITE = "wr"
     TRANSMIT = "tx"
     RECEIVE = "rx"
+    MSG_END = "\r"
 
     def __init__(self, port_name):
         self.arduino = serial.Serial(port=port_name, baudrate=115200, timeout=1)
+
     
     def set_bandwidth(self, bandwidth):
-
+        '''
+        sets bandwidth (kHz) of to 7.8, 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125, 250, or 500
+        sets coding rate to 4/5
+        sets explicit header mode
+        '''
         bandwidth_to_value = {7.8 : 0b0000,
                             10.4 : 0b0001,
                             15.6 : 0b0010,
@@ -33,6 +38,12 @@ class SX1276:
         self.send_command(command)
     
     def set_spreading_factor(self, sf):
+        '''
+        sets spreading factor (chips/symbol) to 64, 128, 256, 512, 1024, 2048, 4096
+        sets normal mode- a single packet is sent
+        CRC disable
+        RX timeout MSB
+        '''
         sf_to_value = {64 : 6,
                     128 : 7,
                     256 : 8,
@@ -55,15 +66,19 @@ class SX1276:
     
     # Read or Write Register
     def construct_command(self, write_or_read, register, value):
-        return write_or_read + " " + register + " " + value + " "
+        return write_or_read + " " + register + " " + value + " " + SX1276.MSG_END
 
     def send_command(self, command):
         print('command: ' + command)
-        # self.arduino.flush()
+        self.arduino.flush()
         self.arduino.write(bytes(command, 'utf-8'))
+        self.get_response()
 
     def get_response(self):
-        response = self.arduino.readline().decode('utf-8')
+        time.sleep(.1)
+        response = self.arduino.read_until(b"\r").decode('utf-8')
+        self.arduino.reset_output_buffer()
+        # response = self.arduino.readline().decode('utf-8')
         print(response)
         print()
 
@@ -139,10 +154,9 @@ sx1276 = SX1276('/dev/tty.usbmodem14401')
 time.sleep(1.7)
 
 sx1276.set_bandwidth(500)
-sx1276.get_response()
 
 sx1276.set_spreading_factor(4096)
-sx1276.get_response()
+
 
 
 
