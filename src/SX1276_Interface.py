@@ -13,12 +13,15 @@ class SX1276:
         self.arduino = serial.Serial(port=port_name, baudrate=115200, timeout=1)
 
     
-    def set_bandwidth(self, bandwidth):
+    def set_bandwidth(self, bandwidth, coding_rate):
         '''
         sets bandwidth (kHz) of to 7.8, 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125, 250, or 500
-        sets coding rate to 4/5
+        sets coding rate to 4/5, 4/6, 4/7, or 4/8
         sets explicit header mode
+        example function call: set_bandwidth(7.8, '4/5')
         '''
+        print('Setting Bandwidth to', bandwidth, 'kHz, and coding rate to', coding_rate)
+
         bandwidth_to_value = {7.8 : 0b0000,
                             10.4 : 0b0001,
                             15.6 : 0b0010,
@@ -29,21 +32,31 @@ class SX1276:
                             125 : 0b0111,
                             250 : 0b1000,
                             500 : 0b1001 }
-        # error coding rate: 4/5
-        # explicit header mode
-        value = str((bandwidth_to_value[bandwidth] << 4) + 0b0010)
-        print('Setting Bandwidth to', bandwidth)
-        reg = str(0x1D)
-        command = self.construct_command(SX1276.WRITE, reg, value)
-        self.send_command(command)
+
+        coding_rate_to_value = {'4/5' : 0b001,
+                                '4/6' : 0b010,
+                                '4/7' : 0b011,
+                                '4/8' : 0b100 }
+        
+        try:
+            value = str((bandwidth_to_value[bandwidth] << 4) + (coding_rate_to_value[coding_rate] << 1) + 0b0)
+            reg = str(0x1D)
+            command = self.construct_command(SX1276.WRITE, reg, value)
+            self.send_command(command)
+        except KeyError:
+            print('Unsucessful: invalid bandwidth or coding rate\n')
+
     
     def set_spreading_factor(self, sf):
         '''
         sets spreading factor (chips/symbol) to 64, 128, 256, 512, 1024, 2048, 4096
         sets normal mode- a single packet is sent
-        CRC disable
-        RX timeout MSB
+        CRC enable 
+        default SymbTimeout
+        example function call: set_spreading_factor(64)
         '''
+        print('Setting Spreading Factor to', sf, "chips/symbol")
+
         sf_to_value = {64 : 6,
                     128 : 7,
                     256 : 8,
@@ -51,12 +64,32 @@ class SX1276:
                     1024 : 10,
                     2048 : 11,
                     4096 : 12}
-        # normal mode
-        # crc disable
-        # RX timeout MSB
-        value = str((sf_to_value[sf] << 4) + 0b0000)
-        print('Setting Spreading Factor to', sf)
-        reg = str(0x1E)
+        
+        try:
+            value = str((sf_to_value[sf] << 4) + 0b0100)
+            reg = str(0x1E)
+            command = self.construct_command(SX1276.WRITE, reg, value)
+            self.send_command(command)
+        except KeyError:
+            print('Unsucessful: invalid spreading factor\n')
+
+    def set_transmit_power(self, Pout):
+        '''
+        sets PA output pin to RFO pin
+        sets MaxPower and OutputPower 
+        example function call: set_transmit_power(10.2)
+        '''
+        print('Setting Transmitted Power to', Pout, 'dBm')
+
+        MaxPower = 0x04
+        Pmax = 10.8 + (.6 * MaxPower)
+        OutputPower = Pout - Pmax + 15
+
+        if (OutputPower % 1 != 0):
+            print('Unsuccessful: OutputPower is not an integer')
+        
+        value = str(int((0x00 << 7) + (MaxPower << 4) + OutputPower))
+        reg = str(0x09)
         command = self.construct_command(SX1276.WRITE, reg, value)
         self.send_command(command)
     
@@ -150,12 +183,14 @@ class SX1276:
 #         print()
 
 
-sx1276 = SX1276('/dev/tty.usbmodem14401')
+sx1276 = SX1276('/dev/tty.usbmodem14301')
 time.sleep(1.7)
 
-sx1276.set_bandwidth(500)
+sx1276.set_bandwidth(500, '4/6')
 
 sx1276.set_spreading_factor(4096)
+
+sx1276.set_transmit_power(10.2)
 
 
 
