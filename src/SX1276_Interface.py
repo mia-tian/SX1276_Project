@@ -39,10 +39,9 @@ class SX1276:
                                 '4/8' : 0b100 }
         
         try:
-            value = str((bandwidth_to_value[bandwidth] << 4) + (coding_rate_to_value[coding_rate] << 1) + 0b0)
-            reg = str(0x1D)
-            command = self.construct_command_write(SX1276.WRITE, reg, value)
-            self.send_command(command)
+            value = (bandwidth_to_value[bandwidth] << 4) + (coding_rate_to_value[coding_rate] << 1) + 0b0
+            reg = 0x1D
+            self.write_register(reg, value)
         except KeyError:
             print('Unsucessful: invalid bandwidth or coding rate\n')
 
@@ -66,10 +65,9 @@ class SX1276:
                     4096 : 12}
         
         try:
-            value = str((sf_to_value[sf] << 4) + 0b0100)
-            reg = str(0x1E)
-            command = self.construct_command_write(SX1276.WRITE, reg, value)
-            self.send_command(command)
+            value = (sf_to_value[sf] << 4) + 0b0100
+            reg = 0x1E
+            self.write_register(reg, value)
         except KeyError:
             print('Unsucessful: invalid spreading factor\n')
 
@@ -94,9 +92,12 @@ class SX1276:
                     Pout_best = calc_Pout
 
         print('Closest Pout:', Pout_best, ', MaxPower:', MaxPower_best, ', OutputPower:', OutputPower_best)
-        value = str(int((0x00 << 7) + (MaxPower_best << 4) + OutputPower_best))
-        reg = str(0x09)
-        command = self.construct_command_write(SX1276.WRITE, reg, value)
+        value = int((0x00 << 7) + (MaxPower_best << 4) + OutputPower_best)
+        reg = 0x09
+        self.write_register(reg, value)
+    
+    def write_register(self, reg, val):
+        command = self.construct_command_write(SX1276.WRITE, str(reg), str(val))
         self.send_command(command)
     
     def read_register(self, reg):
@@ -129,7 +130,7 @@ class SX1276:
         print()
 
 
-sx1276 = SX1276('/dev/tty.usbmodem14401')
+sx1276 = SX1276('/dev/tty.usbmodem14301')
 time.sleep(1.7)
 
 sx1276.set_bandwidth(500, '4/6')
