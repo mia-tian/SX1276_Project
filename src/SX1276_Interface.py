@@ -41,7 +41,7 @@ class SX1276:
         try:
             value = str((bandwidth_to_value[bandwidth] << 4) + (coding_rate_to_value[coding_rate] << 1) + 0b0)
             reg = str(0x1D)
-            command = self.construct_command(SX1276.WRITE, reg, value)
+            command = self.construct_command_write(SX1276.WRITE, reg, value)
             self.send_command(command)
         except KeyError:
             print('Unsucessful: invalid bandwidth or coding rate\n')
@@ -68,7 +68,7 @@ class SX1276:
         try:
             value = str((sf_to_value[sf] << 4) + 0b0100)
             reg = str(0x1E)
-            command = self.construct_command(SX1276.WRITE, reg, value)
+            command = self.construct_command_write(SX1276.WRITE, reg, value)
             self.send_command(command)
         except KeyError:
             print('Unsucessful: invalid spreading factor\n')
@@ -81,16 +81,26 @@ class SX1276:
         '''
         print('Setting Transmitted Power to', Pout, 'dBm')
 
-        MaxPower = 0x04
-        Pmax = 10.8 + (.6 * MaxPower)
-        OutputPower = Pout - Pmax + 15
+        # brute force method to find MaxPower and OutputPower
+        min_dist = float('inf')
+        for MaxPower in range(9):
+            Pmax = 10.8 + (.6 * MaxPower)
+            for OutputPower in range(17):
+                calc_Pout = Pmax - (15 - OutputPower)
+                if abs(calc_Pout - Pout) < min_dist:
+                    min_dist = abs(calc_Pout - Pout)
+                    MaxPower_best = MaxPower
+                    OutputPower_best = OutputPower
+                    Pout_best = calc_Pout
 
-        if (OutputPower % 1 != 0):
-            print('Unsuccessful: OutputPower is not an integer')
-        
-        value = str(int((0x00 << 7) + (MaxPower << 4) + OutputPower))
+        print('Closest Pout:', Pout_best, ', MaxPower:', MaxPower_best, ', OutputPower:', OutputPower_best)
+        value = str(int((0x00 << 7) + (MaxPower_best << 4) + OutputPower_best))
         reg = str(0x09)
-        command = self.construct_command(SX1276.WRITE, reg, value)
+        command = self.construct_command_write(SX1276.WRITE, reg, value)
+        self.send_command(command)
+    
+    def read_register(self, reg):
+        command = self.construct_command_read(SX1276.READ, str(reg))
         self.send_command(command)
     
     # Transmit of Receive
@@ -98,8 +108,11 @@ class SX1276:
         return transmit_or_receive + packet
     
     # Read or Write Register
-    def construct_command(self, write_or_read, register, value):
+    def construct_command_write(self, write_or_read, register, value):
         return write_or_read + " " + register + " " + value + " " + SX1276.MSG_END
+    
+    def construct_command_read(self, write_or_read, register):
+        return write_or_read + " " + register + " " + SX1276.MSG_END
 
     def send_command(self, command):
         print('command: ' + command)
@@ -114,6 +127,18 @@ class SX1276:
         # response = self.arduino.readline().decode('utf-8')
         print(response)
         print()
+
+
+sx1276 = SX1276('/dev/tty.usbmodem14401')
+time.sleep(1.7)
+
+sx1276.set_bandwidth(500, '4/6')
+
+sx1276.set_spreading_factor(4096)
+
+sx1276.set_transmit_power(10)
+
+sx1276.read_register(0x1E)
 
 
 # class SX1276:
@@ -182,15 +207,6 @@ class SX1276:
 #         print(response)
 #         print()
 
-
-sx1276 = SX1276('/dev/tty.usbmodem14301')
-time.sleep(1.7)
-
-sx1276.set_bandwidth(500, '4/6')
-
-sx1276.set_spreading_factor(4096)
-
-sx1276.set_transmit_power(10.2)
 
 
 
