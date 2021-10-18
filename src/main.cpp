@@ -8,6 +8,8 @@ Currently has functionality to take in and decode commands
 to write and read registers, and transmit and receive, but
 can only write and read registers as of now. 
 
+Every command has format "code message_1 message_2 ... \r"
+
 TODO: integrate functionality to transmit and receive
 
 Output:
@@ -198,6 +200,9 @@ void loop()
   else if (code == "rx")
   {
     decodeRX(input_string);
+  }
+  else{
+    Serial.print("Invalid Command");
   }
 
   Serial.print("\r");

@@ -6,6 +6,7 @@ Python interface that can change settings and transmit/
 receive through a SX1276 SemTech RF-chip. Sends commands
 through a serial port to main.cpp (an arduino script)
 that directly controls arduino. 
+Sends command with format: "code message_1 message_2 ... \r"
 
 Output:
 prints exact command sent over to arduino

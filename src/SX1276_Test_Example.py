@@ -5,7 +5,7 @@ from SX1276_Interface import SX1276
 Example of test file that uses SX1276_Interface. Must
 input name of your own serial port.
 
-Output:
+Expected Output:
 
 Setting Bandwidth to 500 kHz, and coding rate to 4/6
 command: wr 29 148 
