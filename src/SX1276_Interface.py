@@ -1,6 +1,16 @@
 import serial
 import time
 
+'''
+Python interface that can change settings and transmit/
+receive through a SX1276 SemTech RF-chip. Sends commands
+through a serial port to main.cpp (an arduino script)
+that directly controls arduino. 
+
+Output:
+prints exact command sent over to arduino
+'''
+
 class SX1276:
 
     READ = "rr"
@@ -11,7 +21,6 @@ class SX1276:
 
     def __init__(self, port_name):
         self.arduino = serial.Serial(port=port_name, baudrate=115200, timeout=1)
-
     
     def set_bandwidth(self, bandwidth, coding_rate):
         '''
@@ -44,7 +53,6 @@ class SX1276:
             self.write_register(reg, value)
         except KeyError:
             print('Unsucessful: invalid bandwidth or coding rate\n')
-
     
     def set_spreading_factor(self, sf):
         '''
@@ -104,9 +112,13 @@ class SX1276:
         command = self.construct_command_read(SX1276.READ, str(reg))
         self.send_command(command)
     
-    # Transmit of Receive
-    def construct_command(self, transmit_or_receive, packet):
-        return transmit_or_receive + packet
+    def transmit(self, packet):
+        command = SX1276.TRANSMIT + " " + packet + " " + SX1276.MSG_END
+        self.send_command(command)
+    
+    def receive(self):
+        command = SX1276.RECEIVE + " " + SX1276.MSG_END
+        self.send_command(command)
     
     # Read or Write Register
     def construct_command_write(self, write_or_read, register, value):
@@ -129,17 +141,6 @@ class SX1276:
         print(response)
         print()
 
-
-sx1276 = SX1276('/dev/tty.usbmodem14301')
-time.sleep(1.7)
-
-sx1276.set_bandwidth(500, '4/6')
-
-sx1276.set_spreading_factor(4096)
-
-sx1276.set_transmit_power(10)
-
-sx1276.read_register(0x1E)
 
 
 # class SX1276:
